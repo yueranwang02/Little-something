@@ -1,8 +1,11 @@
-const CACHE_NAME = "somewhere-a-little-v1";
+const CACHE_NAME = "somewhere-a-little-v2";
 
 const APP_SHELL = [
   "./",
   "./index.html",
+  "./style.css",
+  "./data.js",
+  "./app.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png"
