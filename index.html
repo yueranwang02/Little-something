@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@300;400&display=swap" rel="stylesheet"/>
 <link rel="manifest" href="manifest.webmanifest"/>
 <meta name="theme-color" content="#020810"/>
-<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<link rel="apple-touch-icon" href="icons/icon-512.png"/>
 <style>
 :root {
   --bg: #020810;
@@ -780,7 +780,7 @@ function loadState(){
   if(d===todayStr()){ todayCount=parseInt(localStorage.getItem(SK.count)||'0',10); }
   else{ todayCount=0; localStorage.setItem(SK.date,todayStr()); localStorage.setItem(SK.count,'0'); }
   const sl=localStorage.getItem(SK.lang);
-  currentLang=sl||(navigator.language.startsWith('zh')?'zh':'en');
+  currentLang=sl|| 'zh';
   isFirstVisit=!localStorage.getItem(SK.visited)&&lights.length===0;
 }
 
