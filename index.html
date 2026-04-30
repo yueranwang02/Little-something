@@ -6,6 +6,9 @@
 <title>Somewhere, A Little</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@300;400&display=swap" rel="stylesheet"/>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#020810"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
 <style>
 :root {
   --bg: #020810;
@@ -417,7 +420,7 @@ html,body{
 }
 </style>
 </head>
-<body>
+<>
 
 <div id="canvas"></div>
 
@@ -1476,6 +1479,16 @@ if(isFirstVisit){
   document.getElementById('onboarding').style.display='none';
   onboardingDone=true;
 }
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js")
+        .catch((error) => {
+          console.log("Service worker registration failed:", error);
+        });
+    });
+  }
 </script>
 </body>
 </html>
