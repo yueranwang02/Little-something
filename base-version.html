@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Somewhere, A Little</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Cinzel:wght@300;400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #020810;
+  --border: rgba(255,255,255,0.07);
+  --text: rgba(220,225,235,0.88);
+  --text-dim: rgba(180,190,210,0.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  width:100%;height:100%;overflow:hidden;
+  background:var(--bg);
+  font-family:'Cormorant Garamond',Georgia,serif;
+  color:var(--text);
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+  user-select:none;
+}
+
+/* Canvas */
+#canvas{position:fixed;inset:0;cursor:crosshair;overflow:hidden;}
+#canvas::before{
+  content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;opacity:0.5;z-index:0;
+}
+#canvas::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:38%;
+  background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(18,55,115,0.2) 0%,transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* Header */
+#header{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  padding:20px 22px 0;
+  display:flex;justify-content:space-between;align-items:center;
+  pointer-events:none;
+}
+#title{
+  font-family:'Cinzel',serif;font-weight:300;font-size:10.5px;
+  letter-spacing:.18em;color:rgba(130,162,205,.5);
+  text-transform:uppercase;pointer-events:all;cursor:default;
+  transition:color .3s;
+}
+#title.dev-glow{color:rgba(200,180,100,.7);}
+#header-right{display:flex;align-items:center;gap:14px;}
+#day-counter{font-size:11px;letter-spacing:.12em;color:rgba(130,162,205,.32);font-style:italic;}
+#lang-btn{
+  font-family:'Cormorant Garamond',serif;font-size:11px;letter-spacing:.18em;
+  color:rgba(130,162,205,.38);background:none;
+  border:1px solid rgba(130,162,205,.18);border-radius:10px;
+  padding:3px 9px;cursor:pointer;pointer-events:all;
+  transition:all .25s;-webkit-appearance:none;
+}
+#lang-btn:hover{color:rgba(160,195,240,.7);border-color:rgba(130,162,205,.38);}
+
+/* Hint */
+#hint{
+  position:fixed;bottom:36px;left:0;right:0;text-align:center;
+  font-style:italic;font-size:13.5px;color:var(--text-dim);letter-spacing:.07em;
+  pointer-events:none;transition:opacity 1.4s ease;z-index:5;
+}
+#hint.hidden{opacity:0;}
+
+/* Whisper */
+#whisper{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-style:italic;font-size:15px;color:rgba(160,180,215,.25);
+  letter-spacing:.1em;text-align:center;
+  pointer-events:none;z-index:6;opacity:0;transition:opacity 2.5s ease;width:80%;
+}
+#whisper.show{opacity:1;}
+
+/* Ripple */
+.ripple{
+  position:absolute;transform:translate(-50%,-50%);
+  width:10px;height:10px;border-radius:50%;
+  border:1px solid rgba(160,200,240,.35);
+  pointer-events:none;
+  animation:rippleOut 1.2s ease-out forwards;z-index:3;
+}
+@keyframes rippleOut{
+  0%{width:10px;height:10px;opacity:.5;}
+  100%{width:90px;height:90px;opacity:0;}
+}
+
+/* Lights */
+.light{
+  position:absolute;transform:translate(-50%,-50%);
+  z-index:4;cursor:pointer;
+  animation:lightAppear 1.2s cubic-bezier(.16,1,.3,1) forwards;
+}
+.light.empty{opacity:.48;}
+.light.short .light-symbol{opacity:.85;}
+.light.long .light-ring{animation-duration:5.8s;}
+.light-confused{animation:lightAppear 1.2s cubic-bezier(.16,1,.3,1) forwards,confusedDrift 7s 1.2s ease-in-out infinite;}
+.light-nostalgic .light-symbol{animation:lightPulse 4.5s ease-in-out infinite,filmFlicker 6.5s steps(2,end) infinite;}
+.light-hopeful .light-symbol{animation:lightPulse 4.5s ease-in-out infinite,hopeFloat 5.5s ease-in-out infinite;}
+.light-custom .light-symbol{
+  filter:blur(.35px) drop-shadow(0 0 9px var(--gc)) drop-shadow(0 0 22px var(--gc));
+}
+.light-custom .light-ring{
+  border-style:dotted;
+  animation:ringExpand 5.4s ease-out infinite;
+}
+.light.no-anim{animation:none;opacity:1;}
+.light.empty.no-anim{opacity:.48;}
+@keyframes lightAppear{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.15);}
+  60%{opacity:1;transform:translate(-50%,-50%) scale(1.18);}
+  100%{opacity:1;transform:translate(-50%,-50%) scale(1);}
+}
+.light-symbol{
+  display:block;text-align:center;line-height:1;
+  animation:lightPulse 4.5s ease-in-out infinite;transition:filter .3s;
+}
+.light:hover .light-symbol{
+  filter:drop-shadow(0 0 14px var(--gc)) drop-shadow(0 0 30px var(--gc)) brightness(1.4) !important;
+}
+@keyframes lightPulse{
+  0%,100%{filter:drop-shadow(0 0 5px var(--gc)) drop-shadow(0 0 11px var(--gc));}
+  50%{filter:drop-shadow(0 0 10px var(--gc)) drop-shadow(0 0 24px var(--gc)) drop-shadow(0 0 42px var(--gc));}
+}
+.light-ring{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  border-radius:50%;border:1px solid var(--gc);opacity:0;
+  animation:ringExpand 4s ease-out infinite;
+}
+@keyframes ringExpand{
+  0%{width:20px;height:20px;opacity:.4;}
+  100%{width:70px;height:70px;opacity:0;}
+}
+@keyframes confusedDrift{
+  0%,100%{margin-left:0;margin-top:0;}
+  35%{margin-left:4px;margin-top:-3px;}
+  70%{margin-left:-3px;margin-top:2px;}
+}
+@keyframes filmFlicker{
+  0%,92%,100%{opacity:1;}
+  94%{opacity:.55;}
+  96%{opacity:.82;}
+}
+@keyframes hopeFloat{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-6px);}
+}
+
+/* Onboarding */
+#onboarding{
+  position:fixed;inset:0;z-index:90;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px;pointer-events:all;
+}
+.ob-line{
+  font-style:italic;font-weight:300;font-size:18px;line-height:2;
+  color:rgba(200,215,240,0);text-align:center;letter-spacing:.02em;
+  transition:color 1.2s ease;
+}
+.ob-line.show{color:rgba(200,215,240,.7);}
+#ob-breathe{
+  margin-top:44px;display:flex;flex-direction:column;
+  align-items:center;gap:14px;opacity:0;transition:opacity 1.4s ease;
+}
+#ob-breathe.show{opacity:1;}
+#breathe-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(100,180,240,.5);
+  box-shadow:0 0 10px rgba(100,180,240,.4),0 0 22px rgba(100,180,240,.2);
+  animation:breathe 3.2s ease-in-out infinite;
+}
+@keyframes breathe{
+  0%,100%{transform:scale(1);opacity:.5;box-shadow:0 0 10px rgba(100,180,240,.4);}
+  50%{transform:scale(1.7);opacity:1;box-shadow:0 0 18px rgba(100,180,240,.7),0 0 36px rgba(100,180,240,.3);}
+}
+#ob-cta{font-style:italic;font-size:13px;color:rgba(140,175,220,.42);letter-spacing:.12em;}
+#onboarding.dismissed{opacity:0;pointer-events:none;transition:opacity .6s ease;}
+
+/* Sheet overlay */
+.sheet-overlay{
+  position:fixed;inset:0;
+  background:rgba(1,5,14,.7);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px);
+  z-index:50;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .38s ease;
+}
+.sheet-overlay.visible{opacity:1;pointer-events:all;}
+.sheet-panel{
+  width:100%;max-width:480px;
+  background:linear-gradient(168deg,rgba(5,16,38,.97) 0%,rgba(3,11,26,.99) 100%);
+  border-top:1px solid var(--border);border-radius:22px 22px 0 0;
+  padding:26px 26px 40px;
+  transform:translateY(28px);transition:transform .38s cubic-bezier(.16,1,.3,1);
+  position:relative;
+}
+.sheet-overlay.visible .sheet-panel{transform:translateY(0);}
+.modal-handle{
+  width:34px;height:3px;background:rgba(255,255,255,.13);
+  border-radius:2px;margin:0 auto 24px;
+}
+.close-x{
+  position:absolute;top:20px;right:22px;
+  background:none;border:none;color:rgba(160,180,215,.3);
+  font-size:18px;cursor:pointer;padding:4px;transition:color .2s;line-height:1;
+}
+.close-x:hover{color:rgba(160,180,215,.7);}
+
+/* Question modal */
+#question-text{
+  font-style:italic;font-weight:300;font-size:20px;line-height:1.55;
+  color:rgba(210,220,240,.9);margin-bottom:22px;letter-spacing:.01em;
+}
+#answer-input{
+  width:100%;background:rgba(255,255,255,.035);
+  border:1px solid rgba(255,255,255,.1);border-radius:10px;
+  padding:13px 15px;color:var(--text);
+  font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:300;line-height:1.5;
+  resize:none;height:88px;outline:none;transition:border-color .3s;-webkit-appearance:none;
+}
+#answer-input::placeholder{color:rgba(170,185,210,.28);font-style:italic;}
+#answer-input:focus{border-color:rgba(100,160,220,.32);}
+#emotion-label{font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-dim);margin:18px 0 10px;}
+#emotion-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:24px;}
+#custom-feeling-input{
+  width:100%;background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.085);border-radius:10px;
+  padding:10px 13px;margin:-12px 0 22px;
+  color:var(--text);
+  font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:300;
+  outline:none;transition:border-color .3s;-webkit-appearance:none;
+}
+#custom-feeling-input::placeholder{color:rgba(170,185,210,.26);font-style:italic;}
+#custom-feeling-input:focus{border-color:rgba(100,160,220,.28);}
+.pref-intro,.intent-intro{display:none;}
+.pref-intro.visible,.intent-intro.visible{display:block;}
+.pref-title{
+  font-style:italic;font-weight:300;font-size:20px;line-height:1.55;
+  color:rgba(210,220,240,.9);margin-bottom:8px;letter-spacing:.01em;
+}
+.pref-subtitle{font-style:italic;font-size:14px;line-height:1.55;color:var(--text-dim);margin-bottom:18px;}
+.pref-grid,.intent-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px;}
+.pref-chip{
+  padding:7px 13px;border-radius:18px;
+  border:1px solid rgba(255,255,255,.1);background:transparent;
+  color:rgba(195,208,230,.6);
+  font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;letter-spacing:.04em;
+  cursor:pointer;transition:all .2s;-webkit-appearance:none;
+}
+.pref-chip.active{border-color:rgba(105,165,225,.45);background:rgba(105,165,225,.1);color:rgba(220,235,255,.92);}
+.pref-chip[data-depth="2"].active{border-color:rgba(110,181,200,.45);background:rgba(110,181,200,.1);}
+.pref-chip[data-depth="4"].active{border-color:rgba(196,135,90,.5);background:rgba(196,135,90,.1);}
+#pref-start-btn{
+  width:100%;padding:14px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.11);border-radius:12px;
+  color:rgba(210,220,240,.75);
+  font-family:'Cormorant Garamond',serif;font-size:16px;letter-spacing:.13em;
+  cursor:pointer;transition:all .28s;-webkit-appearance:none;
+}
+#intent-start-btn{
+  width:100%;padding:14px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.11);border-radius:12px;
+  color:rgba(210,220,240,.75);
+  font-family:'Cormorant Garamond',serif;font-size:16px;letter-spacing:.13em;
+  cursor:pointer;transition:all .28s;-webkit-appearance:none;
+}
+#pref-start-btn:hover,#pref-start-btn:active{
+  background:rgba(255,255,255,.09);border-color:rgba(100,160,220,.28);color:rgba(220,232,252,1);
+}
+#intent-start-btn:hover,#intent-start-btn:active{
+  background:rgba(255,255,255,.09);border-color:rgba(100,160,220,.28);color:rgba(220,232,252,1);
+}
+.emotion-tag{
+  padding:6px 13px;border-radius:18px;
+  border:1px solid rgba(255,255,255,.1);background:transparent;
+  color:rgba(195,208,230,.6);
+  font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;letter-spacing:.04em;
+  cursor:pointer;transition:all .2s;-webkit-appearance:none;
+}
+.emotion-tag:hover{border-color:var(--tc);color:var(--tc);}
+.emotion-tag.active{
+  border-color:var(--tc);background:rgba(var(--tr),.13);color:var(--tc);
+  box-shadow:0 0 11px rgba(var(--tr),.18);
+}
+#submit-btn{
+  width:100%;padding:14px;background:rgba(255,255,255,.055);
+  border:1px solid rgba(255,255,255,.11);border-radius:12px;
+  color:rgba(210,220,240,.75);
+  font-family:'Cormorant Garamond',serif;font-size:16px;letter-spacing:.13em;
+  cursor:pointer;transition:all .28s;-webkit-appearance:none;
+}
+#submit-btn:hover,#submit-btn:active{
+  background:rgba(255,255,255,.09);border-color:rgba(100,160,220,.28);color:rgba(220,232,252,1);
+}
+#skip-question-btn{
+  display:block;margin:13px auto 0;background:none;border:none;
+  color:rgba(160,180,215,.38);
+  font-family:'Cormorant Garamond',serif;font-size:14px;font-style:italic;letter-spacing:.08em;
+  cursor:pointer;transition:color .2s;-webkit-appearance:none;
+}
+#skip-question-btn:hover,#skip-question-btn:active{color:rgba(180,205,235,.72);}
+#limit-msg{
+  text-align:center;padding:28px 0 8px;
+  font-style:italic;font-size:16px;color:var(--text-dim);line-height:1.75;
+}
+
+/* Memory panel */
+#mem-date{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(130,162,205,.4);margin-bottom:16px;}
+#mem-question{font-style:italic;font-size:17px;font-weight:300;line-height:1.6;color:rgba(200,215,240,.65);margin-bottom:16px;}
+#mem-divider{width:28px;height:1px;background:rgba(255,255,255,.1);margin-bottom:16px;}
+#mem-answer{font-size:16px;font-weight:300;line-height:1.7;color:rgba(210,225,245,.85);min-height:24px;}
+#mem-answer.empty{color:var(--text-dim);font-style:italic;}
+#mem-emotion-tag{display:inline-block;margin-top:20px;padding:5px 14px;border-radius:16px;border:1px solid;font-style:italic;font-size:13px;}
+#mem-close-btn{
+  display:block;width:100%;margin-top:26px;padding:13px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:11px;
+  color:rgba(180,195,220,.5);
+  font-family:'Cormorant Garamond',serif;font-size:15px;letter-spacing:.1em;
+  cursor:pointer;-webkit-appearance:none;transition:all .2s;
+}
+#mem-close-btn:hover{color:rgba(180,195,220,.85);border-color:rgba(255,255,255,.18);}
+
+/* Bottle */
+#bottle{
+  position:fixed;bottom:78px;right:22px;z-index:22;
+  cursor:pointer;opacity:0;pointer-events:none;transition:filter .3s;
+  animation:floatBottle 6s ease-in-out infinite;
+}
+#bottle.visible{
+  pointer-events:all;
+  animation:bottleIn 1.1s cubic-bezier(.16,1,.3,1) forwards,floatBottle 6s 1.1s ease-in-out infinite;
+}
+@keyframes bottleIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
+@keyframes floatBottle{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-11px) rotate(3deg);}}
+#bottle:hover{filter:brightness(1.35);}
+#bottle-icon{font-size:30px;filter:drop-shadow(0 0 10px rgba(90,195,170,.5));}
+
+/* Center overlay */
+.center-overlay{
+  position:fixed;inset:0;
+  background:rgba(1,5,14,.78);backdrop-filter:blur(13px);-webkit-backdrop-filter:blur(13px);
+  z-index:60;display:flex;align-items:center;justify-content:center;padding:28px;
+  opacity:0;pointer-events:none;transition:opacity .38s ease;
+}
+.center-overlay.visible{opacity:1;pointer-events:all;}
+#bottle-card{
+  max-width:330px;width:100%;
+  background:linear-gradient(152deg,rgba(4,16,38,.98) 0%,rgba(3,12,26,.99) 100%);
+  border:1px solid rgba(90,195,170,.13);border-radius:18px;padding:36px 30px 30px;
+  text-align:center;
+  transform:scale(.88) translateY(12px);transition:transform .42s cubic-bezier(.16,1,.3,1);
+  box-shadow:0 0 60px rgba(70,155,135,.1);
+}
+.center-overlay.visible #bottle-card{transform:scale(1) translateY(0);}
+#bottle-icon-lg{font-size:40px;display:block;margin-bottom:22px;filter:drop-shadow(0 0 13px rgba(90,195,170,.55));}
+#bottle-message{font-style:italic;font-weight:300;font-size:17.5px;line-height:1.78;color:rgba(195,218,228,.88);margin-bottom:22px;}
+#bottle-source{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(90,195,170,.5);}
+#bottle-close-btn{
+  display:block;margin:26px auto 0;background:none;
+  border:1px solid rgba(90,195,170,.18);border-radius:18px;padding:8px 26px;
+  color:rgba(90,195,170,.55);
+  font-family:'Cormorant Garamond',serif;font-size:14px;letter-spacing:.11em;
+  cursor:pointer;transition:all .22s;-webkit-appearance:none;
+}
+#bottle-close-btn:hover{background:rgba(90,195,170,.07);color:rgba(90,195,170,.88);}
+
+/* End of night */
+#night-end{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;
+  pointer-events:none;z-index:80;opacity:0;transition:opacity 1.2s ease;
+}
+#night-end.show{opacity:1;}
+.ne-line{font-style:italic;font-weight:300;font-size:17px;color:rgba(180,200,230,.55);letter-spacing:.06em;text-align:center;}
+.ne-line.small{font-size:14.5px;color:rgba(180,200,230,.42);max-width:320px;line-height:1.55;}
+
+/* Dev panel */
+#dev-panel{
+  position:fixed;bottom:70px;left:18px;z-index:100;
+  background:rgba(5,18,40,.96);border:1px solid rgba(200,180,100,.25);
+  border-radius:14px;padding:16px 18px;
+  display:none;flex-direction:column;gap:8px;min-width:180px;
+  box-shadow:0 0 30px rgba(200,180,100,.08);
+}
+#dev-panel.open{display:flex;}
+#dev-panel h4{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.3em;color:rgba(200,180,100,.55);text-transform:uppercase;margin-bottom:4px;}
+.dev-btn{
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:7px;padding:8px 12px;color:rgba(200,215,240,.65);
+  font-family:'Cormorant Garamond',serif;font-size:14px;cursor:pointer;text-align:left;
+  transition:background .2s;-webkit-appearance:none;
+}
+.dev-btn:hover{background:rgba(255,255,255,.08);}
+.dev-btn.danger{border-color:rgba(200,80,80,.25);color:rgba(220,130,130,.7);}
+
+/* Toast */
+#toast{
+  position:fixed;top:58px;left:50%;
+  transform:translateX(-50%) translateY(-8px);
+  background:rgba(5,16,38,.95);border:1px solid rgba(255,255,255,.09);
+  border-radius:22px;padding:9px 20px;
+  font-style:italic;font-size:13.5px;color:var(--text-dim);
+  z-index:200;pointer-events:none;opacity:0;
+  transition:all .28s ease;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Stars */
+@keyframes starTwinkle{
+  0%,100%{opacity:var(--so,.08);transform:scale(1);}
+  50%{opacity:calc(var(--so,.08)*3);transform:scale(1.5);}
+}
+</style>
+</head>
+<body>
+
+<div id="canvas"></div>
+
+<div id="header">
+  <span id="title">SOMEWHERE, A LITTLE</span>
+  <div id="header-right">
+    <span id="day-counter"></span>
+    <button id="lang-btn">中文</button>
+  </div>
+</div>
+
+<div id="hint"></div>
+<div id="whisper"></div>
+
+<div id="onboarding">
+  <p class="ob-line" id="ob-l1"></p>
+  <p class="ob-line" id="ob-l2"></p>
+  <p class="ob-line" id="ob-l3"></p>
+  <div id="ob-breathe">
+    <div id="breathe-dot"></div>
+    <span id="ob-cta"></span>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="overlay">
+  <div class="sheet-panel" id="modal">
+    <button class="close-x" id="close-btn">✕</button>
+    <div class="modal-handle"></div>
+    <div id="modal-inner">
+      <div class="pref-intro" id="pref-intro">
+        <p class="pref-title" id="pref-title"></p>
+        <p class="pref-subtitle" id="pref-subtitle"></p>
+        <div class="pref-grid" id="pref-grid"></div>
+        <button id="pref-start-btn"></button>
+      </div>
+      <div class="intent-intro" id="intent-intro">
+        <p class="pref-title" id="intent-title"></p>
+        <p class="pref-subtitle" id="intent-subtitle"></p>
+        <div class="intent-grid" id="intent-grid"></div>
+        <button id="intent-start-btn"></button>
+      </div>
+      <div id="question-inner">
+      <p id="question-text"></p>
+      <textarea id="answer-input" rows="3"></textarea>
+      <p id="emotion-label"></p>
+      <div id="emotion-grid"></div>
+      <input id="custom-feeling-input" maxlength="12"/>
+      <button id="submit-btn"></button>
+      <button id="skip-question-btn"></button>
+      </div>
+    </div>
+    <div id="limit-inner" style="display:none">
+      <p id="limit-msg"></p>
+    </div>
+  </div>
+</div>
+
+<div class="sheet-overlay" id="mem-overlay">
+  <div class="sheet-panel">
+    <button class="close-x" id="mem-x">✕</button>
+    <div class="modal-handle"></div>
+    <p id="mem-date"></p>
+    <p id="mem-question"></p>
+    <div id="mem-divider"></div>
+    <p id="mem-answer"></p>
+    <span id="mem-emotion-tag"></span>
+    <button id="mem-close-btn"></button>
+  </div>
+</div>
+
+<div id="bottle"><span id="bottle-icon">🫙</span></div>
+
+<div class="center-overlay" id="bottle-overlay">
+  <div id="bottle-card">
+    <span id="bottle-icon-lg">🫙</span>
+    <p id="bottle-message"></p>
+    <p id="bottle-source"></p>
+    <button id="bottle-close-btn"></button>
+  </div>
+</div>
+
+<div id="night-end">
+  <p class="ne-line" id="ne-l1"></p>
+  <p class="ne-line" id="ne-l2"></p>
+  <p class="ne-line small" id="ne-l3"></p>
+</div>
+
+<div id="dev-panel">
+  <h4>— dev —</h4>
+  <button class="dev-btn" id="dev-add6">add 6 test lights</button>
+  <button class="dev-btn" id="dev-bottle">trigger bottle</button>
+  <button class="dev-btn" id="dev-resetday">reset today's count</button>
+  <button class="dev-btn danger" id="dev-reset">reset everything</button>
+  <button class="dev-btn" id="dev-close">close</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
+
+const LANG = {
+  en: {
+    langBtn:'中文',
+    ob:['This is not empty.','It has not been lit by you yet.','Tap anywhere, and leave one light for tonight.'],
+    obCta:'start here, or anywhere',
+    firstQ:'What brought you here tonight?',
+    emotionLabel:'how does it feel',
+    placeholder:'say something, or nothing at all…',
+    submitBtn:'leave this light',
+    firstLightMsg:'The first light is here.',
+    lightFeedback:['the sea remembers this.','something stayed.',"it's here now."],
+    hintInitial:'tap anywhere to leave a light',
+    hintOneLeft:'tonight, you can leave one more',
+    hintDone:'no more lights tonight — just look around',
+    counter: n => n===0?'no lights left':n===1?'1 light left':`${n} lights left`,
+    limitMsg: h=>`you've left 2 lights tonight.<br><br><span style="font-size:13px;color:rgba(140,160,190,.45);letter-spacing:.1em">come back in ${h}h, the sea will still be here.</span>`,
+    endNight:['The sea has taken two lights tonight.','Come back tomorrow.'],
+    bottleClose:'let it drift away',
+    chooseFeeling:'choose a feeling first…',
+    customFeelingPlaceholder:'or write your own feeling',
+    whispers:['the sea is still here.','you do not have to hurry.',"it's okay to just look.",'the dark is not empty.','something stays when you leave.'],
+    memClose:'hide it again',
+    noAnswer:'(nothing written)',
+    prefTitle:'Tonight, what kind of question should the sea bring?',
+    prefSubtitle:'Choose a few. The sea will remember lightly, and still surprise you.',
+    prefStart:'let the sea ask',
+    intentTitle:'Where should the sea drift tonight?',
+    intentSubtitle:'Only for tonight. Tomorrow, the tide can change.',
+    intentStart:'begin tonight',
+    skipQuestion:'another part of the dark',
+    prefs:{
+      soft:'soft', deep:'deep', self:'about me', memory:'about the past',
+      relationship:'about people', art:'film / music / books', game:'games / fantasy', strange:'strange', surprise:'surprise me'
+    },
+    intents:{
+      usual:'as usual', softer:'softer', deeper:'deeper', self:'about me',
+      memory:'about the past', relationship:'about someone', unknown:'about the unknown',
+      strange:'stranger', surprise:'surprise me'
+    },
+  },
+  zh: {
+    langBtn:'EN',
+    ob:['这里不是空的。','只是还没有被你点亮。','点一下任意地方，留下今晚的一盏灯。'],
+    obCta:'从这里开始，或者从任何地方',
+    firstQ:'今晚是什么把你带到了这里？',
+    emotionLabel:'感觉像是',
+    placeholder:'说点什么，或者什么都不说……',
+    submitBtn:'留下这盏灯',
+    firstLightMsg:'第一盏灯留下了。',
+    lightFeedback:['海记住了这个。','有什么留了下来。','它在这里了。'],
+    hintInitial:'在任意地方点一下，留下一盏灯',
+    hintOneLeft:'今晚，你还可以再留下一盏灯',
+    hintDone:'今晚不能再点亮了——可以只是看看',
+    counter: n => n===0?'今晚没有灯了':`今晚还剩 ${n} 盏`,
+    limitMsg: h=>`你今天已经留下了 2 盏灯。<br><br><span style="font-size:13px;color:rgba(140,160,190,.45);letter-spacing:.1em">${h} 小时后再来，海还在。</span>`,
+    endNight:['今天的海已经收下两盏灯。','明天再来吧。'],
+    bottleClose:'让它漂走',
+    chooseFeeling:'先选一种感觉……',
+    customFeelingPlaceholder:'或者写一个自己的感觉',
+    whispers:['海还在这里。','不用急。','可以只是看着。','黑暗不是空的。','你离开了，有什么留了下来。'],
+    memClose:'藏回去',
+    noAnswer:'（什么都没写）',
+    prefTitle:'今晚，想让海问你哪一类问题？',
+    prefSubtitle:'可以选几个。海会轻轻记住，但仍然保留一点意外。',
+    prefStart:'让海发问',
+    intentTitle:'今晚想让海靠近哪里？',
+    intentSubtitle:'只影响今晚。明天的潮汐可以重新改变。',
+    intentStart:'开始今晚',
+    skipQuestion:'换一片黑暗',
+    prefs:{
+      soft:'温柔一点', deep:'深一点', self:'关于自己', memory:'关于过去',
+      relationship:'关于关系', art:'电影 / 音乐 / 书', game:'游戏 / 幻想', strange:'奇怪一点', surprise:'随便来'
+    },
+    intents:{
+      usual:'照常', softer:'轻一点', deeper:'深一点', self:'关于自己',
+      memory:'关于过去', relationship:'关于关系', unknown:'关于未知',
+      strange:'奇怪一点', surprise:'随便来'
+    },
+  },
+};
+
+const EMOTIONS = [
+  {id:'light',    en:'light',    zh:'明亮', symbols:['✦','✧','⋆','✺'],  color:'#f0e6b0',rgb:'240,230,176'},
+  {id:'dark',     en:'dark',     zh:'黑暗', symbols:['◈','◆','◐','●'],  color:'#a07cc0',rgb:'160,124,192'},
+  {id:'nostalgic',en:'nostalgic',zh:'怀旧', symbols:['◎','◌','⌾','◍'],  color:'#c4875a',rgb:'196,135,90' },
+  {id:'funny',    en:'funny',    zh:'好笑', symbols:['✿','☻','❋','♢'],  color:'#e8c84a',rgb:'232,200,74' },
+  {id:'calm',     en:'calm',     zh:'平静', symbols:['○','◯','☾','〜'], color:'#6ab5c8',rgb:'106,181,200'},
+  {id:'confused', en:'confused', zh:'困惑', symbols:['⁂','※','⁎','⌁'],  color:'#c87ab5',rgb:'200,122,181'},
+  {id:'hopeful',  en:'hopeful',  zh:'希望', symbols:['↑','↟','✶','❇'],  color:'#6ec99a',rgb:'110,201,154'},
+  {id:'unclear',  en:'unclear',  zh:'说不清', symbols:['∴','∵','⋯','⌁'],  color:'#9fb1c8',rgb:'159,177,200'},
+  {id:'custom',   en:'custom',   zh:'自定义', symbols:['≋','◌','◦','∿'],  color:'#8aa8b8',rgb:'138,168,184'},
+];
+
+const QUESTIONS = {
+  en:[
+    'What did you almost say today?',
+    'Where did the time go this week?',
+    'What color was your mood at 3pm?',
+    'What sound are you tired of hearing?',
+    'What would you erase from today?',
+    'Who were you thinking about without realizing?',
+    'What did you notice that no one else did?',
+    'What did you hold back?',
+    'What do you wish had lasted longer?',
+    'What are you pretending not to want?',
+    'Where does your mind go when it goes quiet?',
+    "What would tonight's version of you tell morning-you?",
+    'What small thing felt unbearable today?',
+    'What did you almost forget?',
+    'What are you waiting for that might never come?',
+    "What have you been carrying that isn't yours?",
+    'When did you last feel genuinely still?',
+    'What memory came back uninvited today?',
+    'What did you start and quietly abandon?',
+    'What word do you keep almost saying?',
+  ],
+  zh:[
+    '今天有没有一句话，差点就说出口了？',
+    '这一周的时间去哪里了？',
+    '下午三点的时候，你的心情是什么颜色？',
+    '有没有哪种声音，最近让你感到疲倦？',
+    '今天有什么事，你希望它没发生？',
+    '今天有没有一个人，一直在你脑子里你自己没注意到？',
+    '今天你注意到了什么，别人可能都没看见？',
+    '今天你克制住了什么？',
+    '今天有什么，你希望它能再长一点？',
+    '有什么东西，你在假装自己不想要？',
+    '当你安静下来的时候，脑子会跑去哪里？',
+    '今晚的你会对今早的你说什么？',
+    '今天有没有什么小事让你觉得难以承受？',
+    '今天差点忘掉什么？',
+    '你还在等什么，也许它永远不会来？',
+    '你在替谁扛着什么？',
+    '上一次真正感到平静，是什么时候？',
+    '今天什么记忆不请自来？',
+    '你开始了什么，又悄悄放弃了？',
+    '有哪个词，你总是差一点就说出口？',
+  ],
+};
+
+const PREF_OPTIONS = [
+  {id:'soft',category:'calm',depth:2},
+  {id:'deep',category:'philosophy',depth:4},
+  {id:'self',category:'self',depth:3},
+  {id:'memory',category:'memory',depth:3},
+  {id:'relationship',category:'relationship',depth:4},
+  {id:'art',category:'art',depth:2},
+  {id:'game',category:'game',depth:1},
+  {id:'strange',category:'strange',depth:2},
+  {id:'surprise',category:null,depth:null}
+];
+
+const DAILY_INTENT_OPTIONS = [
+  {id:'usual',categories:null},
+  {id:'softer',categories:['daily','self','calm'],maxDepth:2},
+  {id:'deeper',categories:['self','relationship','memory','philosophy'],minDepth:3,maxDepth:5},
+  {id:'self',categories:['self','daily'],minDepth:1,maxDepth:4},
+  {id:'memory',categories:['memory','city','relationship'],minDepth:2,maxDepth:4},
+  {id:'relationship',categories:['relationship','self','memory'],minDepth:2,maxDepth:4},
+  {id:'unknown',categories:['philosophy','strange','future','self'],minDepth:2,maxDepth:4},
+  {id:'strange',categories:['strange','future','daily'],minDepth:1,maxDepth:3},
+  {id:'surprise',categories:null,surprise:true}
+];
+
+const ADJACENT_CATEGORIES = {
+  self:['daily','memory','future','relationship'],
+  memory:['relationship','city','self','art'],
+  relationship:['memory','self','future','city'],
+  future:['self','strange','philosophy','city'],
+  art:['memory','strange','city','self'],
+  strange:['future','philosophy','art','daily'],
+  daily:['self','calm','city','memory'],
+  philosophy:['future','strange','self','calm'],
+  city:['memory','relationship','daily','art'],
+  game:['strange','future','self','art'],
+  calm:['daily','self','memory','city']
+};
+
+const QUESTION_BANK = [
+  {id:'q_001',en:'What did you almost say today?',zh:'今天有没有一句话，差点就说出口了？',category:['relationship','self'],depth:3,tone:['quiet'],niche:false},
+  {id:'q_002',en:'Was there a small moment today that made you stop?',zh:'今天有没有一个很小的瞬间，让你停了一下？',category:['daily','self'],depth:1,tone:['soft'],niche:false},
+  {id:'q_003',en:'If tonight leaves one light behind, what should it remember?',zh:'如果今晚留下一盏灯，它应该记住什么？',category:['self','memory'],depth:2,tone:['tender'],niche:false},
+  {id:'q_004',en:'What feeling has been near you lately, but hard to name?',zh:'最近有没有一种情绪一直在你附近，但很难说清？',category:['self'],depth:3,tone:['honest'],niche:false},
+  {id:'q_005',en:'What color was your mood at 3pm?',zh:'下午三点的时候，你的心情是什么颜色？',category:['daily','strange'],depth:1,tone:['playful'],niche:false},
+  {id:'q_006',en:'Where does your mind go when it goes quiet?',zh:'当你安静下来的时候，脑子会跑去哪里？',category:['self','philosophy'],depth:3,tone:['quiet'],niche:false},
+  {id:'q_007',en:'What memory came back without asking today?',zh:'今天有什么记忆不请自来？',category:['memory'],depth:3,tone:['nostalgic'],niche:false},
+  {id:'q_008',en:'What did you notice that no one else did?',zh:'今天你注意到了什么，别人可能都没看见？',category:['daily','self'],depth:2,tone:['quiet'],niche:false},
+  {id:'q_009',en:'What are you pretending not to want?',zh:'有什么东西，你在假装自己不想要？',category:['self','future'],depth:4,tone:['honest'],niche:false},
+  {id:'q_010',en:'What would tonight’s version of you tell morning-you?',zh:'今晚的你会对今早的你说什么？',category:['self','daily'],depth:2,tone:['tender'],niche:false},
+  {id:'q_011',en:'Is there a person you have not spoken to in a long time, but still meet in small moments?',zh:'有没有一个人，你们已经很久没说话，但某些瞬间你还是会想起？',category:['relationship','memory'],depth:4,tone:['tender'],niche:false},
+  {id:'q_012',en:'What would you erase from today, if erasing did not make you forget?',zh:'如果擦掉不会让你忘记，今天你想擦掉什么？',category:['daily','self'],depth:3,tone:['dark'],niche:false},
+  {id:'q_013',en:'Which song, scene, or sentence has been following you lately?',zh:'最近有没有一首歌、一个画面、或一句话一直跟着你？',category:['art','memory'],depth:2,tone:['nostalgic'],niche:false},
+  {id:'q_014',en:'If today were a room, what would be left on the floor?',zh:'如果今天是一个房间，地上会留下什么？',category:['strange','daily'],depth:2,tone:['quiet'],niche:false},
+  {id:'q_015',en:'What kind of future feels close enough to touch, but not close enough to trust?',zh:'哪一种未来像是快要碰到了，却还不敢相信？',category:['future','self'],depth:4,tone:['hopeful'],niche:false},
+  {id:'q_016',en:'What is a place that still holds an older version of you?',zh:'有没有一个地方，还留着以前的你？',category:['city','memory'],depth:3,tone:['nostalgic'],niche:false},
+  {id:'q_017',en:'What did you start and quietly abandon?',zh:'你开始了什么，又悄悄放弃了？',category:['self','future'],depth:3,tone:['honest'],niche:false},
+  {id:'q_018',en:'What would feel lighter if you could say it badly, without explaining?',zh:'如果可以说得很笨、也不用解释，你想说什么？',category:['relationship','self'],depth:4,tone:['tender'],niche:false},
+  {id:'q_019',en:'If your life were a video game today, what level would you be stuck on?',zh:'如果今天的人生是一款游戏，你卡在哪一关？',category:['game','humor','self'],depth:1,tone:['playful'],niche:true},
+  {id:'q_020',en:'What movie scene would understand your week better than a person could?',zh:'哪一个电影画面，比一个人更懂你这一周？',category:['art','self'],depth:2,tone:['quiet'],niche:true},
+  {id:'q_021',en:'What would you photograph tonight if no one needed to see it?',zh:'如果不用给任何人看，今晚你会拍下什么？',category:['art','city','self'],depth:2,tone:['soft'],niche:true},
+  {id:'q_022',en:'What ordinary thing felt briefly magical today?',zh:'今天有什么普通的东西，曾经短暂地像魔法？',category:['daily','strange','calm'],depth:1,tone:['soft'],niche:false}
+];
+
+const BOTTLE_MSGS = [
+  {text:"I watched the rain for two hours and thought of nothing. It was the best two hours I've had in months.",src:'from Shanghai'},
+  {text:"I still haven't called my father back. It's been three months.",src:'from Oslo'},
+  {text:"I laughed so hard last night that I cried. I can't remember the joke anymore.",src:'from Buenos Aires'},
+  {text:"I think I'm falling out of love and I don't know how to be sad about it.",src:'from Tokyo'},
+  {text:"Today I bought flowers for myself. It felt strange and exactly right.",src:'from Lisbon'},
+  {text:"I've been drawing the same face for years. I still don't know whose it is.",src:'from Montréal'},
+  {text:"I said I was fine. I was not fine. Neither was she. We both knew. We kept going.",src:'from Seoul'},
+  {text:"I found a note I wrote to myself at seventeen. I wasn't wrong about everything.",src:'from Berlin'},
+  {text:"Some mornings I wake up feeling like a version of myself from five years ago.",src:'from Cape Town'},
+  {text:"I keep a list of things I want to say to people who are gone. It gets longer every year.",src:'from Kyoto'},
+  {text:"I finished a book tonight and held it for a long time before putting it down.",src:'from Dublin'},
+  {text:"I walked in a direction I didn't know for an hour. I found nothing. It was enough.",src:'from Istanbul'},
+];
+
+const CATEGORY_LABELS = {
+  en:{self:'self',memory:'memory',relationship:'someone',future:'future',art:'film / music / books',strange:'strange',daily:'daily life',philosophy:'the unknown',city:'place',game:'games',calm:'quiet',unknown:'the unknown'},
+  zh:{self:'自己',memory:'记忆',relationship:'关系',future:'未来',art:'电影 / 音乐 / 书',strange:'奇怪',daily:'日常',philosophy:'未知',city:'地方',game:'游戏',calm:'安静',unknown:'未知'}
+};
+
+// ── STORAGE ───────────────────────────────────────────────────────────────────
+
+const SK = {lights:'nightsea_lights',date:'nightsea_date',count:'nightsea_today',lang:'nightsea_lang',visited:'nightsea_visited',firstQ:'nightsea_firstq',profile:'nightsea_profile',dailyIntent:'nightsea_daily_intent',customFeelings:'nightsea_custom_feelings'};
+const DAILY_LIMIT = 2, BOTTLE_AT = 6;
+
+if(new URLSearchParams(location.search).has('reset')){
+  [SK.lights,SK.date,SK.count,SK.visited,SK.firstQ,SK.profile,SK.dailyIntent,SK.customFeelings].forEach(k=>localStorage.removeItem(k));
+  window.history.replaceState({},document.title,location.pathname);
+}
+
+let lights=[], todayCount=0, currentLang='en';
+let pendingX=0, pendingY=0, selectedEmo=null, selectedFeelingLabel='', currentQ='', currentQMeta=null;
+let isFirstVisit=false, onboardingDone=false;
+let userProfile=null, dailyIntent=null;
+let customFeelings=[];
+
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+
+function loadState(){
+  try{ lights=JSON.parse(localStorage.getItem(SK.lights))||[]; }catch{ lights=[]; }
+  try{ userProfile=JSON.parse(localStorage.getItem(SK.profile))||null; }catch{ userProfile=null; }
+  try{ dailyIntent=JSON.parse(localStorage.getItem(SK.dailyIntent))||null; }catch{ dailyIntent=null; }
+  try{ customFeelings=JSON.parse(localStorage.getItem(SK.customFeelings))||[]; }catch{ customFeelings=[]; }
+  if(!Array.isArray(customFeelings)) customFeelings=[];
+  if(dailyIntent?.date!==todayStr()) dailyIntent=null;
+  if(userProfile){
+    userProfile.scores={...defaultScores(),...(userProfile.scores||{})};
+    userProfile.categories=userProfile.categories||['self','daily','memory'];
+    userProfile.preferredDepth=userProfile.preferredDepth||3;
+    userProfile.seenQuestionIds=userProfile.seenQuestionIds||[];
+  }
+  const d=localStorage.getItem(SK.date);
+  if(d===todayStr()){ todayCount=parseInt(localStorage.getItem(SK.count)||'0',10); }
+  else{ todayCount=0; localStorage.setItem(SK.date,todayStr()); localStorage.setItem(SK.count,'0'); }
+  const sl=localStorage.getItem(SK.lang);
+  currentLang=sl||(navigator.language.startsWith('zh')?'zh':'en');
+  isFirstVisit=!localStorage.getItem(SK.visited)&&lights.length===0;
+}
+
+function saveState(){
+  try{
+    localStorage.setItem(SK.lights,JSON.stringify(lights));
+    localStorage.setItem(SK.date,todayStr());
+    localStorage.setItem(SK.count,String(todayCount));
+  }catch{}
+}
+
+function defaultScores(){
+  return {self:1,memory:1,relationship:1,future:1,art:1,strange:1,daily:1,philosophy:1,city:1,calm:1,game:0};
+}
+
+function saveProfile(){
+  if(userProfile) localStorage.setItem(SK.profile,JSON.stringify(userProfile));
+}
+
+function saveDailyIntent(){
+  if(dailyIntent) localStorage.setItem(SK.dailyIntent,JSON.stringify(dailyIntent));
+}
+
+function saveCustomFeeling(word){
+  const clean=(word||'').trim().slice(0,12);
+  if(!clean) return;
+  customFeelings=[clean,...customFeelings.filter(item=>item!==clean)].slice(0,3);
+  localStorage.setItem(SK.customFeelings,JSON.stringify(customFeelings));
+}
+
+function createProfileFromPrefs(selected){
+  const scores=defaultScores();
+  const categories=[];
+  let depthTotal=0, depthCount=0;
+  let surprise=selected.includes('surprise')||selected.length===0;
+
+  selected.forEach(id=>{
+    const pref=PREF_OPTIONS.find(p=>p.id===id);
+    if(!pref) return;
+    if(pref.category){
+      scores[pref.category]=(scores[pref.category]||0)+3;
+      if(!categories.includes(pref.category)) categories.push(pref.category);
+    }
+    if(pref.depth){ depthTotal+=pref.depth; depthCount++; }
+  });
+
+  userProfile={
+    categories:categories.length?categories:['self','daily','memory'],
+    preferredDepth:depthCount?Math.round(depthTotal/depthCount):3,
+    surprise,
+    scores,
+    seenQuestionIds:[]
+  };
+  saveProfile();
+  dailyIntent={date:todayStr(),mode:'first',categories:null,useProfile:true};
+  saveDailyIntent();
+}
+
+// ── LANGUAGE ──────────────────────────────────────────────────────────────────
+
+function t(key,...args){
+  const val=LANG[currentLang][key];
+  return typeof val==='function'?val(...args):val;
+}
+
+function applyLanguage(){
+  document.documentElement.lang=currentLang;
+  const ob=t('ob');
+  document.getElementById('ob-l1').textContent=ob[0];
+  document.getElementById('ob-l2').textContent=ob[1];
+  document.getElementById('ob-l3').textContent=ob[2];
+  document.getElementById('ob-cta').textContent=t('obCta');
+  document.getElementById('lang-btn').textContent=t('langBtn');
+  document.getElementById('answer-input').placeholder=t('placeholder');
+  document.getElementById('custom-feeling-input').placeholder=t('customFeelingPlaceholder');
+  document.getElementById('emotion-label').textContent=t('emotionLabel');
+  document.getElementById('submit-btn').textContent=t('submitBtn');
+  document.getElementById('mem-close-btn').textContent=t('memClose');
+  document.getElementById('bottle-close-btn').textContent=t('bottleClose');
+  document.getElementById('pref-title').textContent=t('prefTitle');
+  document.getElementById('pref-subtitle').textContent=t('prefSubtitle');
+  document.getElementById('pref-start-btn').textContent=t('prefStart');
+  document.getElementById('intent-title').textContent=t('intentTitle');
+  document.getElementById('intent-subtitle').textContent=t('intentSubtitle');
+  document.getElementById('intent-start-btn').textContent=t('intentStart');
+  document.getElementById('skip-question-btn').textContent=t('skipQuestion');
+  buildPreferenceGrid();
+  buildDailyIntentGrid();
+  buildEmotionGrid();
+  updateCounter();
+  updateHint();
+}
+
+document.getElementById('lang-btn').addEventListener('click',()=>{
+  currentLang=currentLang==='en'?'zh':'en';
+  localStorage.setItem(SK.lang,currentLang);
+  applyLanguage();
+});
+
+document.getElementById('custom-feeling-input').addEventListener('input',e=>{
+  const word=e.target.value.trim();
+  if(!word){
+    selectedEmo=null;
+    selectedFeelingLabel='';
+    return;
+  }
+  document.querySelectorAll('.emotion-tag').forEach(b=>b.classList.remove('active'));
+  selectedEmo='custom';
+  selectedFeelingLabel=word;
+});
+
+// ── ONBOARDING ────────────────────────────────────────────────────────────────
+
+function startOnboarding(){
+  ['ob-l1','ob-l2','ob-l3'].forEach((id,i)=>{
+    setTimeout(()=>document.getElementById(id).classList.add('show'), 900+i*1000);
+  });
+  setTimeout(()=>document.getElementById('ob-breathe').classList.add('show'), 4200);
+}
+
+function dismissOnboarding(x,y){
+  if(onboardingDone) return;
+  onboardingDone=true;
+  const ob=document.getElementById('onboarding');
+  ob.classList.add('dismissed');
+  localStorage.setItem(SK.visited,'1');
+  setTimeout(()=>{
+    ob.style.display='none';
+    if(x!==null) openModal(x,y);
+  },600);
+}
+
+document.getElementById('onboarding').addEventListener('click',e=>{
+  if(!onboardingDone){
+    const rect=document.getElementById('canvas').getBoundingClientRect();
+    dismissOnboarding((e.clientX-rect.left)/rect.width,(e.clientY-rect.top)/rect.height);
+  }
+});
+
+// ── STARS ─────────────────────────────────────────────────────────────────────
+
+function createStars(){
+  const c=document.getElementById('canvas');
+  for(let i=0;i<55;i++){
+    const s=document.createElement('div');
+    const sz=Math.random()*1.4+0.5, op=Math.random()*.22+.05;
+    s.style.cssText=`position:absolute;left:${Math.random()*100}%;top:${Math.random()*72}%;
+      width:${sz}px;height:${sz}px;border-radius:50%;
+      background:rgba(200,215,240,${op});--so:${op};
+      animation:starTwinkle ${Math.random()*5+4}s ${Math.random()*9}s ease-in-out infinite;
+      pointer-events:none;z-index:1;`;
+    c.appendChild(s);
+  }
+}
+
+// ── LIGHTS ────────────────────────────────────────────────────────────────────
+
+function lightSize(ans){
+  const l=(ans||'').length;
+  if(l===0)   return{fs:'17px',rw:'28px',rh:'28px'};
+  if(l<30)    return{fs:'21px',rw:'38px',rh:'38px'};
+  if(l<100)   return{fs:'25px',rw:'48px',rh:'48px'};
+  return             {fs:'29px',rw:'58px',rh:'58px'};
+}
+
+function answerShape(ans){
+  const l=(ans||'').length;
+  if(l===0) return 'empty';
+  if(l<30) return 'short';
+  if(l>120) return 'long';
+  return 'medium';
+}
+
+function renderLight(light,animate){
+  const em=EMOTIONS.find(e=>e.id===(light.visualType||light.emotion))||EMOTIONS[4];
+  const sym=light.symbol||em.symbols[0];
+  const sz=lightSize(light.answer);
+  const visual=light.visualType||light.emotion||'calm';
+  const el=document.createElement('div');
+  el.className=`light light-${visual} ${answerShape(light.answer)}`+(animate?'':' no-anim');
+  el.style.left=(light.x*100)+'%';
+  el.style.top=(light.y*100)+'%';
+  el.style.setProperty('--gc',em.color);
+  el.dataset.id=light.id;
+  el.innerHTML=`<div class="light-ring" style="width:${sz.rw};height:${sz.rh};--gc:${em.color};animation-delay:${Math.random()*4}s"></div>
+<span class="light-symbol" style="font-size:${sz.fs};color:${em.color};--gc:${em.color}">${sym}</span>`;
+  el.addEventListener('click',e=>{e.stopPropagation();openMemory(light);});
+  document.getElementById('canvas').appendChild(el);
+}
+
+function renderAllLights(){ lights.forEach(l=>renderLight(l,false)); }
+
+// ── RIPPLE ────────────────────────────────────────────────────────────────────
+
+function spawnRipple(cx,cy){
+  const c=document.getElementById('canvas'), r=c.getBoundingClientRect();
+  const d=document.createElement('div');
+  d.className='ripple';
+  d.style.left=(cx-r.left)+'px'; d.style.top=(cy-r.top)+'px';
+  c.appendChild(d);
+  d.addEventListener('animationend',()=>d.remove());
+}
+
+// ── IDLE WHISPER ──────────────────────────────────────────────────────────────
+
+let idleTimer,wTimer;
+function resetIdle(){ clearTimeout(idleTimer); hideWhisper(); idleTimer=setTimeout(showWhisper,8000); }
+function showWhisper(){
+  const ws=t('whispers'), w=document.getElementById('whisper');
+  w.textContent=ws[Math.floor(Math.random()*ws.length)];
+  w.classList.add('show');
+  wTimer=setTimeout(hideWhisper,4500);
+}
+function hideWhisper(){ clearTimeout(wTimer); document.getElementById('whisper').classList.remove('show'); }
+['click','touchstart','mousemove'].forEach(ev=>document.addEventListener(ev,resetIdle,{passive:true}));
+
+// ── EMOTION GRID ──────────────────────────────────────────────────────────────
+
+function buildEmotionGrid(){
+  const grid=document.getElementById('emotion-grid');
+  grid.innerHTML='';
+  EMOTIONS.filter(em=>em.id!=='custom').forEach(em=>{
+    const btn=document.createElement('button');
+    btn.className='emotion-tag';
+    btn.dataset.id=em.id;
+    btn.textContent=em[currentLang];
+    btn.style.setProperty('--tc',em.color);
+    btn.style.setProperty('--tr',em.rgb);
+    if(selectedEmo===em.id) btn.classList.add('active');
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.emotion-tag').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedEmo=em.id;
+      selectedFeelingLabel=em[currentLang];
+      document.getElementById('custom-feeling-input').value='';
+    });
+    grid.appendChild(btn);
+  });
+  customFeelings.forEach(word=>{
+    const em=EMOTIONS.find(e=>e.id==='custom');
+    const btn=document.createElement('button');
+    btn.className='emotion-tag';
+    btn.dataset.id='custom';
+    btn.textContent=word;
+    btn.style.setProperty('--tc',em.color);
+    btn.style.setProperty('--tr',em.rgb);
+    if(selectedEmo==='custom'&&selectedFeelingLabel===word) btn.classList.add('active');
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.emotion-tag').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedEmo='custom';
+      selectedFeelingLabel=word;
+      document.getElementById('custom-feeling-input').value=word;
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function buildPreferenceGrid(){
+  const grid=document.getElementById('pref-grid');
+  grid.innerHTML='';
+  const labels=t('prefs');
+
+  PREF_OPTIONS.forEach(pref=>{
+    const btn=document.createElement('button');
+    btn.className='pref-chip';
+    btn.type='button';
+    btn.dataset.id=pref.id;
+    if(pref.depth) btn.dataset.depth=String(pref.depth);
+    btn.textContent=labels[pref.id];
+    btn.addEventListener('click',()=>{
+      if(pref.id==='surprise'){
+        document.querySelectorAll('.pref-chip').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        return;
+      }
+      document.querySelector('.pref-chip[data-id="surprise"]')?.classList.remove('active');
+      btn.classList.toggle('active');
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function buildDailyIntentGrid(){
+  const grid=document.getElementById('intent-grid');
+  grid.innerHTML='';
+  const labels=t('intents');
+
+  DAILY_INTENT_OPTIONS.forEach(intent=>{
+    const btn=document.createElement('button');
+    btn.className='pref-chip';
+    btn.type='button';
+    btn.dataset.id=intent.id;
+    btn.textContent=labels[intent.id];
+    if(intent.id==='usual') btn.classList.add('active');
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('#intent-grid .pref-chip').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function createDailyIntent(id){
+  const intent=DAILY_INTENT_OPTIONS.find(item=>item.id===id)||DAILY_INTENT_OPTIONS[0];
+  dailyIntent={
+    date:todayStr(),
+    mode:intent.id,
+    categories:intent.categories,
+    minDepth:intent.minDepth,
+    maxDepth:intent.maxDepth,
+    surprise:!!intent.surprise,
+    useProfile:intent.id==='usual'
+  };
+  saveDailyIntent();
+}
+
+function weightedPick(items){
+  const total=items.reduce((sum,item)=>sum+Math.max(0.1,item.weight||1),0);
+  let roll=Math.random()*total;
+  for(const item of items){
+    roll-=Math.max(0.1,item.weight||1);
+    if(roll<=0) return item.value;
+  }
+  return items[items.length-1]?.value;
+}
+
+function topProfileCategories(){
+  return Object.entries(userProfile?.scores||defaultScores())
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,4)
+    .map(([cat])=>cat);
+}
+
+function allowedNicheCats(){
+  return new Set([...(userProfile?.categories||[]),...topProfileCategories(),...(dailyIntent?.categories||[])]);
+}
+
+function canUseQuestion(q,cats=allowedNicheCats()){
+  return !q.niche||q.category.some(cat=>cats.has(cat));
+}
+
+function depthFits(q,intent=dailyIntent){
+  if(!intent) return true;
+  if(intent.minDepth&&q.depth<intent.minDepth) return false;
+  if(intent.maxDepth&&q.depth>intent.maxDepth) return false;
+  return true;
+}
+
+function pickQuestion(){
+  if(!userProfile) createProfileFromPrefs([]);
+  const answeredIds=lights.map(light=>light.questionId).filter(id=>id&&id!=='first');
+  const seen=new Set([...(userProfile.seenQuestionIds||[]),...answeredIds]);
+  const universal=QUESTION_BANK.filter(q=>!q.niche);
+  const highCats=topProfileCategories();
+  const adjacent=[...new Set(highCats.flatMap(cat=>ADJACENT_CATEGORIES[cat]||[]))];
+  const nicheCats=allowedNicheCats();
+  const mode=Math.random();
+  let candidates;
+
+  if(dailyIntent?.surprise){
+    candidates=universal;
+  }else if(dailyIntent?.categories&&mode<0.6){
+    candidates=QUESTION_BANK.filter(q=>q.category.some(cat=>dailyIntent.categories.includes(cat))&&depthFits(q)&&canUseQuestion(q,nicheCats));
+  }else if(mode<0.85){
+    candidates=QUESTION_BANK.filter(q=>q.category.some(cat=>highCats.includes(cat))&&canUseQuestion(q,nicheCats));
+  }else{
+    candidates=QUESTION_BANK.filter(q=>q.category.some(cat=>adjacent.includes(cat))&&!q.niche);
+  }
+
+  candidates=candidates.filter(q=>!seen.has(q.id));
+  if(candidates.length===0) candidates=QUESTION_BANK.filter(q=>canUseQuestion(q,nicheCats)&&depthFits(q));
+  if(candidates.length===0) candidates=universal;
+
+  const preferredDepth=userProfile.preferredDepth||3;
+  const q=weightedPick(candidates.map(q=>({
+    value:q,
+    weight:1/(1+Math.abs(q.depth-preferredDepth))
+  })))||QUESTION_BANK[0];
+
+  userProfile.seenQuestionIds=[...(userProfile.seenQuestionIds||[]),q.id].slice(-24);
+  saveProfile();
+  return q;
+}
+
+function showQuestion(){
+  const firstQDone=localStorage.getItem(SK.firstQ);
+  currentQMeta=(!firstQDone&&lights.length===0)?null:pickQuestion();
+  currentQ=currentQMeta?currentQMeta[currentLang]:t('firstQ');
+  document.getElementById('question-text').textContent='\u201c'+currentQ+'\u201d';
+  document.getElementById('answer-input').value='';
+  document.getElementById('custom-feeling-input').value='';
+  document.getElementById('skip-question-btn').style.display=currentQMeta?'block':'none';
+  selectedEmo=null; selectedFeelingLabel=''; buildEmotionGrid();
+  document.getElementById('pref-intro').classList.remove('visible');
+  document.getElementById('intent-intro').classList.remove('visible');
+  document.getElementById('question-inner').style.display='block';
+}
+
+function updateProfileAfterAnswer(light){
+  if(!userProfile||!currentQMeta) return;
+  const length=(light.answer||'').length;
+  const emotionWeight=['dark','nostalgic','confused','hopeful'].includes(light.emotion)?0.35:0.15;
+  const answerWeight=length>120?0.7:length>40?0.35:length>0?0.12:0;
+  const delta=emotionWeight+answerWeight;
+
+  currentQMeta.category.forEach(cat=>{
+    userProfile.scores[cat]=(userProfile.scores[cat]||0)+delta;
+  });
+  userProfile.preferredDepth=Math.round((userProfile.preferredDepth*4+currentQMeta.depth)/5);
+  saveProfile();
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────────
+
+function openModal(x,y){
+  pendingX=x; pendingY=y;
+  const inner=document.getElementById('modal-inner');
+  const limitInner=document.getElementById('limit-inner');
+  if(todayCount>=DAILY_LIMIT){
+    const tom=new Date(); tom.setDate(tom.getDate()+1); tom.setHours(0,0,0,0);
+    const h=Math.ceil((tom-Date.now())/3600000);
+    document.getElementById('limit-msg').innerHTML=t('limitMsg',h);
+    inner.style.display='none'; limitInner.style.display='block';
+  } else {
+    inner.style.display='block'; limitInner.style.display='none';
+    if(!userProfile){
+      document.getElementById('pref-intro').classList.add('visible');
+      document.getElementById('intent-intro').classList.remove('visible');
+      document.getElementById('question-inner').style.display='none';
+      buildPreferenceGrid();
+    }else if(!dailyIntent){
+      document.getElementById('pref-intro').classList.remove('visible');
+      document.getElementById('intent-intro').classList.add('visible');
+      document.getElementById('question-inner').style.display='none';
+      buildDailyIntentGrid();
+    }else{
+      showQuestion();
+    }
+  }
+  document.getElementById('overlay').classList.add('visible');
+}
+
+function closeModal(){ document.getElementById('overlay').classList.remove('visible'); }
+document.getElementById('close-btn').addEventListener('click',closeModal);
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===document.getElementById('overlay'))closeModal();});
+document.getElementById('pref-start-btn').addEventListener('click',()=>{
+  const selected=[...document.querySelectorAll('#pref-grid .pref-chip.active')].map(btn=>btn.dataset.id);
+  createProfileFromPrefs(selected);
+  showQuestion();
+});
+document.getElementById('intent-start-btn').addEventListener('click',()=>{
+  const selected=document.querySelector('#intent-grid .pref-chip.active')?.dataset.id||'usual';
+  createDailyIntent(selected);
+  showQuestion();
+});
+document.getElementById('skip-question-btn').addEventListener('click',()=>{
+  showQuestion();
+});
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+
+document.getElementById('submit-btn').addEventListener('click',()=>{
+  if(!selectedEmo){showToast(t('chooseFeeling'));return;}
+  const customWord=document.getElementById('custom-feeling-input').value.trim();
+  const visualType=selectedEmo==='custom'?'custom':selectedEmo;
+  const em=EMOTIONS.find(e=>e.id===visualType);
+  const feelingLabel=selectedEmo==='custom'?(customWord||selectedFeelingLabel):selectedFeelingLabel;
+  if(!feelingLabel){showToast(t('chooseFeeling'));return;}
+  if(selectedEmo==='custom') saveCustomFeeling(feelingLabel);
+  const light={
+    id:Date.now(), x:pendingX, y:pendingY,
+    emotion:visualType,
+    visualType,
+    feeling:feelingLabel,
+    answer:document.getElementById('answer-input').value.trim(),
+    question:currentQ,
+    questionId:currentQMeta?.id||'first',
+    questionCategories:currentQMeta?.category||['self'],
+    questionDepth:currentQMeta?.depth||3,
+    symbol:em.symbols[Math.floor(Math.random()*em.symbols.length)],
+    date:todayStr(),
+  };
+  const isFirst=lights.length===0;
+  lights.push(light); todayCount++;
+  updateProfileAfterAnswer(light);
+  saveState(); localStorage.setItem(SK.firstQ,'1');
+  renderLight(light,true);
+  closeModal(); checkBottle(); updateCounter(); updateHint();
+  setTimeout(()=>showToast(isFirst?t('firstLightMsg'):pickFb()),800);
+  if(todayCount>=DAILY_LIMIT) setTimeout(showEndOfNight,1600);
+});
+
+function pickFb(){ const fb=t('lightFeedback'); return fb[Math.floor(Math.random()*fb.length)]; }
+
+// ── CANVAS TAP ────────────────────────────────────────────────────────────────
+
+document.getElementById('canvas').addEventListener('click',e=>{
+  if(e.target.closest('.light')||e.target.closest('#bottle')) return;
+  if(!onboardingDone&&isFirstVisit) return;
+  spawnRipple(e.clientX,e.clientY);
+  const r=document.getElementById('canvas').getBoundingClientRect();
+  openModal((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
+});
+
+// ── MEMORY ────────────────────────────────────────────────────────────────────
+
+function openMemory(light){
+  const em=EMOTIONS.find(e=>e.id===(light.visualType||light.emotion))||EMOTIONS[4];
+  const d=new Date(typeof light.date==='string'&&light.date.length===10?light.date+'T12:00:00':light.id);
+  const fmt=new Intl.DateTimeFormat(currentLang==='zh'?'zh-CN':'en-US',{month:'long',day:'numeric',year:'numeric'}).format(d);
+  document.getElementById('mem-date').textContent=fmt;
+  document.getElementById('mem-question').textContent=light.question?'\u201c'+light.question+'\u201d':'—';
+  const ma=document.getElementById('mem-answer');
+  if(light.answer){ ma.textContent=light.answer; ma.classList.remove('empty'); }
+  else { ma.textContent=t('noAnswer'); ma.classList.add('empty'); }
+  const tag=document.getElementById('mem-emotion-tag');
+  tag.textContent=light.feeling||em[currentLang];
+  tag.style.color=em.color; tag.style.borderColor=em.color+'55';
+  tag.style.background='rgba('+em.rgb+',.1)';
+  document.getElementById('mem-overlay').classList.add('visible');
+}
+function closeMemory(){ document.getElementById('mem-overlay').classList.remove('visible'); }
+document.getElementById('mem-x').addEventListener('click',closeMemory);
+document.getElementById('mem-close-btn').addEventListener('click',closeMemory);
+document.getElementById('mem-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('mem-overlay'))closeMemory();});
+
+// ── BOTTLE ────────────────────────────────────────────────────────────────────
+
+function checkBottle(){
+  if(lights.length>=BOTTLE_AT) document.getElementById('bottle').classList.add('visible');
+}
+document.getElementById('bottle').addEventListener('click',()=>{
+  const p=BOTTLE_MSGS[Math.floor(Math.random()*BOTTLE_MSGS.length)];
+  document.getElementById('bottle-message').textContent='\u201c'+p.text+'\u201d';
+  document.getElementById('bottle-source').textContent=p.src;
+  document.getElementById('bottle-overlay').classList.add('visible');
+});
+document.getElementById('bottle-close-btn').addEventListener('click',()=>document.getElementById('bottle-overlay').classList.remove('visible'));
+document.getElementById('bottle-overlay').addEventListener('click',e=>{if(e.target===document.getElementById('bottle-overlay'))document.getElementById('bottle-overlay').classList.remove('visible');});
+
+// ── COUNTER + HINT ────────────────────────────────────────────────────────────
+
+function updateCounter(){
+  document.getElementById('day-counter').textContent=t('counter',Math.max(0,DAILY_LIMIT-todayCount));
+}
+function updateHint(){
+  const h=document.getElementById('hint');
+  const rem=Math.max(0,DAILY_LIMIT-todayCount);
+  if(rem===DAILY_LIMIT){ h.textContent=t('hintInitial'); h.classList.remove('hidden'); }
+  else if(rem===1){ h.textContent=t('hintOneLeft'); h.classList.remove('hidden'); }
+  else if(rem===0){ h.textContent=t('hintDone'); h.classList.remove('hidden'); }
+}
+
+// ── END OF NIGHT ──────────────────────────────────────────────────────────────
+
+function unique(items){
+  return [...new Set(items.filter(Boolean))];
+}
+
+function topCategoriesFor(lightsForToday){
+  const counts={};
+  lightsForToday.forEach(light=>{
+    (light.questionCategories||[]).forEach(cat=>{
+      counts[cat]=(counts[cat]||0)+1;
+    });
+  });
+  if(dailyIntent?.mode==='unknown') counts.unknown=(counts.unknown||0)+1;
+  return Object.entries(counts)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,3)
+    .map(([cat])=>CATEGORY_LABELS[currentLang][cat]||cat);
+}
+
+function closingLineFor(lightsForToday,cats,avgDepth,totalAnswerLength){
+  const hasUnknown=cats.some(cat=>['unknown','philosophy','strange'].includes(cat));
+  const hasRelationship=cats.includes('relationship');
+  if(totalAnswerLength<20) return currentLang==='zh'?'没说太多也没关系，这盏灯已经在这里了。':'Not much had to be said. The light is still here.';
+  if(totalAnswerLength>220) return currentLang==='zh'?'这盏灯停留得久了一点。':'This light stayed a little longer.';
+  if(hasUnknown&&avgDepth>=3) return currentLang==='zh'?'黑暗不用一次看完。':'The dark does not have to be seen all at once.';
+  if(hasRelationship) return currentLang==='zh'?'有些回声，不只属于你一个人。':'Some echoes do not belong to you alone.';
+  if(avgDepth<=2) return currentLang==='zh'?'今天已经够了，轻一点也很好。':'This is enough for tonight. Soft counts, too.';
+  return currentLang==='zh'?'明天也许可以去另一片黑暗。':'Tomorrow can belong to another part of the dark.';
+}
+
+function nightSummary(){
+  const todays=lights.filter(light=>light.date===todayStr()).slice(-DAILY_LIMIT);
+  if(todays.length===0) return t('endNight');
+
+  const feelings=unique(todays.map(light=>light.feeling)).slice(0,3);
+  const rawCats=unique(todays.flatMap(light=>light.questionCategories||[]));
+  if(dailyIntent?.mode==='unknown') rawCats.push('unknown');
+  const cats=topCategoriesFor(todays);
+  const avgDepth=todays.reduce((sum,light)=>sum+(light.questionDepth||3),0)/todays.length;
+  const totalAnswerLength=todays.reduce((sum,light)=>sum+(light.answer||'').length,0);
+  const line3=closingLineFor(todays,rawCats,avgDepth,totalAnswerLength);
+
+  if(currentLang==='zh'){
+    return [
+      `今晚的海留下了：${feelings.join('、') || '说不清'}。`,
+      `它更靠近：${cats.join(' / ') || '自己'}。`,
+      line3
+    ];
+  }
+  return [
+    `Tonight left: ${feelings.join(', ') || 'something unclear'}.`,
+    `It drifted toward: ${cats.join(' / ') || 'self'}.`,
+    line3
+  ];
+}
+
+function showEndOfNight(){
+  const msgs=nightSummary();
+  document.getElementById('ne-l1').textContent=msgs[0];
+  document.getElementById('ne-l2').textContent=msgs[1];
+  document.getElementById('ne-l3').textContent=msgs[2]||'';
+  const en=document.getElementById('night-end');
+  en.classList.add('show');
+  setTimeout(()=>en.classList.remove('show'),6200);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+
+let toastTmo;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTmo); toastTmo=setTimeout(()=>el.classList.remove('show'),2700);
+}
+
+// ── DEV PANEL ─────────────────────────────────────────────────────────────────
+
+let devTaps=0, devTimer;
+document.getElementById('title').addEventListener('click',()=>{
+  devTaps++; clearTimeout(devTimer);
+  document.getElementById('title').classList.add('dev-glow');
+  devTimer=setTimeout(()=>{devTaps=0;document.getElementById('title').classList.remove('dev-glow');},2800);
+  if(devTaps>=5){
+    devTaps=0; clearTimeout(devTimer);
+    document.getElementById('title').classList.remove('dev-glow');
+    document.getElementById('dev-panel').classList.toggle('open');
+  }
+});
+document.getElementById('dev-close').addEventListener('click',()=>document.getElementById('dev-panel').classList.remove('open'));
+document.getElementById('dev-reset').addEventListener('click',()=>{
+  [SK.lights,SK.date,SK.count,SK.visited,SK.firstQ,SK.profile,SK.dailyIntent,SK.customFeelings].forEach(k=>localStorage.removeItem(k));
+  location.reload();
+});
+document.getElementById('dev-resetday').addEventListener('click',()=>{
+  todayCount=0; localStorage.setItem(SK.count,'0'); localStorage.setItem(SK.date,todayStr());
+  localStorage.removeItem(SK.dailyIntent); dailyIntent=null;
+  updateCounter(); updateHint();
+  document.getElementById('dev-panel').classList.remove('open');
+  showToast("today's count reset.");
+});
+document.getElementById('dev-add6').addEventListener('click',()=>{
+  for(let i=0;i<6;i++){
+    const em=EMOTIONS[i%EMOTIONS.length];
+    const l={id:Date.now()+i,x:.12+Math.random()*.76,y:.18+Math.random()*.64,
+      emotion:em.id,answer:'',question:'',
+      visualType:em.id,feeling:em[currentLang],
+      symbol:em.symbols[Math.floor(Math.random()*em.symbols.length)],date:todayStr()};
+    lights.push(l); renderLight(l,false);
+  }
+  saveState(); checkBottle();
+  document.getElementById('dev-panel').classList.remove('open');
+  showToast('6 lights added.');
+});
+document.getElementById('dev-bottle').addEventListener('click',()=>{
+  while(lights.length<BOTTLE_AT){
+    const em=EMOTIONS[lights.length%EMOTIONS.length];
+    lights.push({id:Date.now()+lights.length,x:.1+Math.random()*.8,y:.1+Math.random()*.8,
+      emotion:em.id,answer:'',question:'',
+      visualType:em.id,feeling:em[currentLang],
+      symbol:em.symbols[0],date:todayStr()});
+  }
+  saveState(); renderAllLights(); checkBottle();
+  document.getElementById('dev-panel').classList.remove('open');
+  showToast('bottle threshold reached.');
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+
+loadState();
+applyLanguage();
+createStars();
+renderAllLights();
+updateCounter();
+updateHint();
+checkBottle();
+resetIdle();
+
+if(isFirstVisit){
+  startOnboarding();
+}else{
+  document.getElementById('onboarding').style.display='none';
+  onboardingDone=true;
+}
+</script>
+</body>
+</html>
